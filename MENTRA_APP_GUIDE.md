@@ -1,6 +1,6 @@
 # **Guía de Integración: Creando tu MiniApp para Mentra Glasses**
 
-Esta guía te ayudará a crear una MiniApp en **MentraOS** que se conecte con tu `numa_ai_api` para dotar a tus gafas de inteligencia en tiempo real.
+Esta guía te ayudará a crear una MiniApp en **MentraOS** que se conecte con tu `mentra_devpaul_ai_api` para dotar a tus gafas de inteligencia en tiempo real.
 
 ---
 
@@ -18,7 +18,7 @@ Esta guía te ayudará a crear una MiniApp en **MentraOS** que se conecte con tu
 
 En el portal de desarrolladores:
 1.  Haz clic en **"Create New MiniApp"**.
-2.  Define el nombre (ej. `Numa AI Assistant`) y una descripción corta.
+2.  Define el nombre (ej. `DevPaul AI Assistant`) y una descripción corta.
 3.  Obtén tu **App ID**, lo necesitarás para el código.
 
 ---
@@ -36,7 +36,7 @@ const API_URL = 'https://tu-api-desplegada.com/api/v1/query';
 
 const app = new MentraApp({
   id: 'tu-app-id',
-  name: 'Numa AI Assistant',
+  name: 'DevPaul AI Assistant',
 });
 
 // Evento al presionar el botón de las gafas (ej. botón derecho)
@@ -54,7 +54,7 @@ app.onButtonPress('right', async () => {
 
     GlassesIO.displayMessage('Procesando...');
 
-    // 2. Enviar a numa_ai_api
+    // 2. Enviar a mentra_devpaul_ai_api
     const response = await fetch(API_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -72,7 +72,7 @@ app.onButtonPress('right', async () => {
 
   } catch (error) {
     console.error('Error en la integración:', error);
-    GlassesIO.displayMessage('Error de conexión con Numa AI');
+    GlassesIO.displayMessage('Error de conexión con DevPaul AI');
   }
 });
 

@@ -3,8 +3,8 @@ dotenv.config();
 
 export const config = {
   app: {
-    id: process.env.APP_ID || 'com.iaaplicada.numa-ai',
-    name: process.env.APP_NAME || 'Numa AI',
+    id: process.env.APP_ID || 'com.iaaplicada.devpaul-ai',
+    name: process.env.APP_NAME || 'DevPaul AI',
     port: Number(process.env.PORT) || 3000,
     apiKey: process.env.MENTRAOS_API_KEY || 'local_dev_key',
   },
@@ -18,7 +18,7 @@ export const config = {
     apiUrl: process.env.GROQ_API_URL || 'https://api.groq.com/openai/v1/chat/completions',
     streamUrl: process.env.GROQ_STREAM_URL || 'https://api.groq.com/openai/v1/chat/completions',
     systemPrompt: process.env.GROQ_SYSTEM_PROMPT || 
-      'Eres Numa, un asistente de IA amigable y útil. Responde de forma concisa y clara en español.',
+      'Eres DevPaul, un asistente de IA amigable y útil. Responde de forma concisa y clara en español.',
     visionSystemPrompt: process.env.GROQ_VISION_SYSTEM_PROMPT ||
       'Describe lo que ves en esta imagen de forma breve y clara en español.',
   },

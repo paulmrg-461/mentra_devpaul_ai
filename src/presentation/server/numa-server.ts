@@ -10,7 +10,7 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-export class NumaAppServer extends ActualAppServer {
+export class MentraDevPaulAppServer extends ActualAppServer {
   constructor(private sessionHandler: SessionHandler) {
     super({
       packageName: config.app.id,
@@ -167,7 +167,7 @@ export class NumaAppServer extends ActualAppServer {
           </head>
           <body>
             <div class="card">
-              <img src="/public/numa_ai_logo.jpg" alt="Numa AI Logo" class="logo">
+              <img src="/public/devpaul_ai_logo.png" alt="DevPaul AI Logo" class="logo">
               <h1>${config.app.name}</h1>
               <div class="tagline">Red de Recuerdos</div>
               

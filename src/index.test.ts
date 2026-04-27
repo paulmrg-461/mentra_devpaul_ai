@@ -48,7 +48,7 @@ import { SessionState } from './presentation/handlers/session.handler';
 // Mock global fetch
 global.fetch = vi.fn();
 
-describe('Numa AI MiniApp (Clean Architecture)', () => {
+describe('DevPaul AI MiniApp (Clean Architecture)', () => {
   let mockSession: any;
 
   beforeEach(() => {
@@ -105,14 +105,14 @@ describe('Numa AI MiniApp (Clean Architecture)', () => {
 
       sessionHandler.setup(mockSession);
       
-      // Simulate hearing "Numa detente"
-      await transcriptionHandler({ text: 'Numa detente', isFinal: true });
+      // Simulate hearing "DevPaul detente"
+      await transcriptionHandler({ text: 'DevPaul detente', isFinal: true });
 
       expect(mockSession.audio.cancelAllRequests).toHaveBeenCalled();
       expect(mockSession.layouts.showTextWall).toHaveBeenCalledWith('Detenido.');
     });
 
-    it('should transition to LISTENING when "Numa" is heard', async () => {
+    it('should transition to LISTENING when "DevPaul" is heard', async () => {
       let transcriptionHandler: any;
       mockSession.events.onTranscriptionForLanguage.mockImplementation((lang: string, handler: any) => {
         transcriptionHandler = handler;
@@ -121,8 +121,8 @@ describe('Numa AI MiniApp (Clean Architecture)', () => {
 
       sessionHandler.setup(mockSession);
       
-      // Simulate hearing "Hola Numa"
-      await transcriptionHandler({ text: 'Hola Numa', isFinal: true });
+      // Simulate hearing "Hola DevPaul"
+      await transcriptionHandler({ text: 'Hola DevPaul', isFinal: true });
 
       expect(mockSession.layouts.showTextWall).toHaveBeenCalledWith('¿Qué necesitas?');
       expect(mockSession.audio.speak).toHaveBeenCalledWith('¿Qué necesitas?');
@@ -146,7 +146,7 @@ describe('Numa AI MiniApp (Clean Architecture)', () => {
       sessionHandler.setup(mockSession);
       
       // 1. Wake up
-      await transcriptionHandler({ text: 'Numa', isFinal: true });
+      await transcriptionHandler({ text: 'DevPaul', isFinal: true });
       
       // 2. Command
       await transcriptionHandler({ text: 'Toma una foto', isFinal: true });
@@ -194,8 +194,8 @@ describe('Numa AI MiniApp (Clean Architecture)', () => {
 
       sessionHandler.setup(mockSession);
 
-      // Wake up Numa
-      await transcriptionHandler({ text: 'Numa', isFinal: true });
+      // Wake up DevPaul
+      await transcriptionHandler({ text: 'DevPaul', isFinal: true });
 
       // Send voice command
       await transcriptionHandler({ text: '¿Qué hora es?', isFinal: true });

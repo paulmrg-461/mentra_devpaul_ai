@@ -1,4 +1,4 @@
-export const WAKE_WORD = 'numa';
+export const WAKE_WORD = 'devpaul';
 
 export const STOP_COMMANDS = ['detente', 'para'];
 
@@ -24,7 +24,7 @@ export const USER_MESSAGES = {
   listening: 'Escuchando...',
   capturing: 'Capturando foto...',
   stopped: 'Detenido.',
-  ready: 'Numa ready.',
+  ready: 'DevPaul ready.',
   voiceError: 'Fallo en el asistente de voz.',
   visionError: 'Fallo en el análisis de visión.',
   noTranscription: 'No te escuché bien, intenta de nuevo.',

@@ -1,8 +1,8 @@
-# Numa AI - Optimized for Background Audio & Groq API
+# DevPaul AI - Optimized for Background Audio & Groq API
 
 ## 🎯 Overview
 
-Numa AI is a Mentra Glasses application optimized for **continuous background audio listening** and **AI-powered responses using Groq API**. It enables hands-free voice interaction with intelligent scene analysis capabilities.
+DevPaul AI is a Mentra Glasses application optimized for **continuous background audio listening** and **AI-powered responses using Groq API**. It enables hands-free voice interaction with intelligent scene analysis capabilities.
 
 ## ✨ Key Features
 
@@ -36,7 +36,7 @@ Numa AI is a Mentra Glasses application optimized for **continuous background au
 │  │ SessionHandler   │  │ AudioSessionMgr │ │
 │  └──────────────────┘  └─────────────────┘ │
 │  ┌──────────────────┐                      │
-│  │ NumaAppServer    │                      │
+│  │ MentraDevPaulAppServer    │                      │
 │  └──────────────────┘                      │
 └─────────────┬───────────────────────────────┘
               │
@@ -80,7 +80,7 @@ Interfaces with Groq API:
 
 #### 3. SessionHandler (`session.handler.ts`)
 State machine for interaction flow:
-- **IDLE**: Waits for wake word "numa"
+- **IDLE**: Waits for wake word "devpaul"
 - **LISTENING**: Active listening mode, buffers transcriptions
 - **PROCESSING**: Executing voice/vision commands
 
@@ -101,8 +101,8 @@ Create `.env` file:
 ```bash
 # Mentra Configuration
 PORT=3000
-APP_ID=com.iaaplicada.numa-ai
-APP_NAME=Numa AI
+APP_ID=com.iaaplicada.devpaul-ai
+APP_NAME=DevPaul AI
 MENTRAOS_API_KEY=your_mentra_api_key
 
 # Groq API Configuration
@@ -111,7 +111,7 @@ GROQ_MODEL=llama-3.3-70b-versatile
 GROQ_API_URL=https://api.groq.com/openai/v1/chat/completions
 
 # Optional: Custom Prompts
-GROQ_SYSTEM_PROMPT=Eres Numa, un asistente de IA amigable y útil.
+GROQ_SYSTEM_PROMPT=Eres DevPaul, un asistente de IA amigable y útil.
 GROQ_VISION_SYSTEM_PROMPT=Describe lo que ves en esta imagen brevemente.
 ```
 
@@ -136,16 +136,16 @@ npm start
 
 ### Voice Commands
 
-1. **Wake Word**: Say "Numa" to activate
-2. **Direct Command**: "Numa ¿qué hora es?" (wake + command)
+1. **Wake Word**: Say "DevPaul" to activate
+2. **Direct Command**: "DevPaul ¿qué hora es?" (wake + command)
 3. **Two-Step**: 
-   - Say "Numa" → enters LISTENING mode
+   - Say "DevPaul" → enters LISTENING mode
    - Then speak your question
 
 ### Vision Commands
 
 - **Double-tap** glasses to capture and analyze scene
-- Say "Numa toma una foto" or "analiza esto"
+- Say "DevPaul toma una foto" or "analiza esto"
 - AI describes what it sees
 
 ### Stop Commands
@@ -190,7 +190,7 @@ await this.audioManager?.speak(response, true);
 ### State Machine Flow
 
 ```
-IDLE ──[wake word "numa"]──► LISTENING
+IDLE ──[wake word "devpaul"]──► LISTENING
      │                           │
      │                           ├─[command]──► PROCESSING
      │                           │                  │
@@ -268,7 +268,7 @@ GROQ_SYSTEM_PROMPT=Responde en máximo 2 oraciones. Sé directo.
 GROQ_SYSTEM_PROMPT=Explica las cosas en detalle, dando ejemplos cuando sea posible.
 
 # Change language
-GROQ_SYSTEM_PROMPT=You are Numa, a friendly AI assistant. Respond in English.
+GROQ_SYSTEM_PROMPT=You are DevPaul, a friendly AI assistant. Respond in English.
 ```
 
 ## 🐛 Troubleshooting

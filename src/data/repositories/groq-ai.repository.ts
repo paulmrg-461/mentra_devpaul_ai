@@ -40,7 +40,7 @@ export class GroqAIRepository implements IAIRepository {
    */
   async query(text: string): Promise<IAIResponse> {
     const systemPrompt = config.groq.systemPrompt || 
-      'Eres Numa, un asistente de IA amigable y útil. Responde de forma concisa y clara.';
+      'Eres DevPaul, un asistente de IA amigable y útil. Responde de forma concisa y clara.';
 
     const response = await this.fetchWithTimeout(config.groq.apiUrl, {
       method: 'POST',
@@ -134,7 +134,7 @@ export class GroqAIRepository implements IAIRepository {
     onChunk: (chunk: string) => void
   ): Promise<IAIResponse> {
     const systemPrompt = config.groq.systemPrompt ||
-      'Eres Numa, un asistente de IA amigable y útil. Responde de forma concisa y clara.';
+      'Eres DevPaul, un asistente de IA amigable y útil. Responde de forma concisa y clara.';
 
     const response = await this.fetchWithTimeout(config.groq.streamUrl || config.groq.apiUrl, {
       method: 'POST',

@@ -2,7 +2,7 @@ import { GroqAIRepository } from './data/repositories/groq-ai.repository.js';
 import { VoiceAssistantUseCase } from './domain/use-cases/voice-assistant.use-case.js';
 import { VisionAssistantUseCase } from './domain/use-cases/vision-assistant.use-case.js';
 import { SessionHandler } from './presentation/handlers/session.handler.js';
-import { NumaAppServer } from './presentation/server/numa-server.js';
+import { MentraDevPaulAppServer } from './presentation/server/devpaul-server.js';
 import { config } from './shared/config/env.js';
 
 // 1. Initialize Groq Repository (optimized for background audio + Groq API)
@@ -16,7 +16,7 @@ const visionUseCase = new VisionAssistantUseCase(aiRepository);
 const sessionHandler = new SessionHandler(voiceUseCase, visionUseCase);
 
 // 4. Initialize and Start Server
-const server = new NumaAppServer(sessionHandler);
+const server = new MentraDevPaulAppServer(sessionHandler);
 
 if (process.env.NODE_ENV !== 'test') {
   server.start().then(() => {

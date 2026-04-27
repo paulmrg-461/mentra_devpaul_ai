@@ -29,7 +29,7 @@ export class SessionHandler {
    * Initializes the session and sets up the main transcription loop
    */
   setup(session: AppSession) {
-    console.log('Initializing Numa Session Handler (Logging enabled)...');
+    console.log('Initializing DevPaul Session Handler (Logging enabled)...');
     this.state = SessionState.IDLE;
 
     // Initialize audio session manager for background listening
@@ -112,7 +112,7 @@ export class SessionHandler {
       console.error('[ERROR] Error during processing:', err);
     } finally {
       this.state = SessionState.IDLE;
-      console.log('[STATE] Back to IDLE. Ready for "Numa".');
+      console.log('[STATE] Back to IDLE. Ready for "DevPaul".');
     }
   }
 
