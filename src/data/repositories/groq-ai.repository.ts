@@ -126,6 +126,69 @@ export class GroqAIRepository implements IAIRepository {
     };
   }
 
+  async queryMeeting(question: string, transcript: string): Promise<IAIResponse> {
+    const systemPrompt =
+      'Eres un asistente de reuniones. Tienes acceso a la transcripción de una reunión en curso. ' +
+      'Responde preguntas sobre lo que se habló, decidió o mencionó. Sé conciso y directo. Responde en español.';
+
+    const response = await this.fetchWithTimeout(config.groq.apiUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: this.model,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: `Transcripción:\n${transcript}\n\nPregunta: ${question}` },
+        ],
+        temperature: 0.3,
+        max_tokens: 300,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Groq API error: ${response.statusText} - ${errorText}`);
+    }
+
+    const data = await response.json();
+    if (!data.choices?.[0]?.message?.content) {
+      throw new Error('Invalid Groq API response format');
+    }
+    return { response: data.choices[0].message.content.trim() };
+  }
+
+  async summarizeMeeting(transcript: string): Promise<IAIResponse> {
+    const systemPrompt =
+      'Eres un asistente de reuniones. Genera un resumen estructurado con este formato exacto:\n' +
+      'DECISIONES:\n- [decisión]\n\nACCIONES:\n- [acción] (responsable si se menciona)\n\nPREGUNTAS ABIERTAS:\n- [pregunta]\n\n' +
+      'Solo incluye lo mencionado en la transcripción. Responde en español.';
+
+    const response = await this.fetchWithTimeout(config.groq.apiUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: this.model,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: `Transcripción:\n${transcript}` },
+        ],
+        temperature: 0.3,
+        max_tokens: 800,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Groq API error: ${response.statusText} - ${errorText}`);
+    }
+
+    const data = await response.json();
+    if (!data.choices?.[0]?.message?.content) {
+      throw new Error('Invalid Groq API response format');
+    }
+    return { response: data.choices[0].message.content.trim() };
+  }
+
   /**
    * Query with streaming response (for future enhancement)
    */

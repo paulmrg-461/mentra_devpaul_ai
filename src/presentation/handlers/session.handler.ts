@@ -1,19 +1,24 @@
 import { AppSession } from '@mentra/sdk';
 import { VoiceAssistantUseCase } from '../../domain/use-cases/voice-assistant.use-case.js';
 import { VisionAssistantUseCase } from '../../domain/use-cases/vision-assistant.use-case.js';
+import { MeetingAssistantUseCase } from '../../domain/use-cases/meeting-assistant.use-case.js';
+import { MeetingTranscript } from '../../domain/entities/meeting-transcript.js';
 import {
   WAKE_WORD,
   STOP_COMMANDS,
   VISION_COMMANDS,
+  MEETING_START_COMMANDS,
+  MEETING_END_COMMANDS,
   MIN_TRANSCRIPTION_LENGTH,
   USER_MESSAGES,
 } from '../../shared/config/constants.js';
-import { AudioSessionManager, AudioState } from './audio-session.manager.js';
+import { AudioSessionManager } from './audio-session.manager.js';
 
 export enum SessionState {
   IDLE,
   LISTENING,
-  PROCESSING
+  PROCESSING,
+  MEETING
 }
 
 export class SessionHandler {
@@ -22,17 +27,15 @@ export class SessionHandler {
 
   constructor(
     private voiceUseCase: VoiceAssistantUseCase,
-    private visionUseCase: VisionAssistantUseCase
+    private visionUseCase: VisionAssistantUseCase,
+    private meetingUseCase: MeetingAssistantUseCase,
+    private meetingTranscript: MeetingTranscript
   ) {}
 
-  /**
-   * Initializes the session and sets up the main transcription loop
-   */
   setup(session: AppSession) {
     console.log('Initializing DevPaul Session Handler (Logging enabled)...');
     this.state = SessionState.IDLE;
 
-    // Initialize audio session manager for background listening
     this.audioManager = new AudioSessionManager(session);
     this.audioManager.startBackgroundListening();
 
@@ -46,7 +49,6 @@ export class SessionHandler {
 
       if (textLength < MIN_TRANSCRIPTION_LENGTH) return;
 
-      // Buffer transcription when in listening mode
       if (this.audioManager?.isListening()) {
         this.audioManager.addToTranscriptionBuffer(lowerText);
       }
@@ -68,22 +70,23 @@ export class SessionHandler {
             await this.handleStop(session);
           }
           break;
+
+        case SessionState.MEETING:
+          await this.handleMeetingState(session, lowerText, data);
+          break;
       }
     });
 
-    // Handle manual button press
     session.events.onButtonPress((data) => {
       if (data.buttonId === 'right' && data.pressType === 'short') {
         this.handleManualTrigger(session);
       }
     });
 
-    // Handle double tap
     session.events.onTouchEvent('double_tap', async () => {
       await this.handleDoubleTap(session);
     });
 
-    // Handle Webview messages
     session.events.onCustomMessage('webview_action', async (payload: any) => {
       console.log('Webview action received:', payload);
       if (payload.action === 'talk') {
@@ -94,6 +97,79 @@ export class SessionHandler {
         await this.handleStop(session);
       }
     });
+  }
+
+  private async handleMeetingState(session: AppSession, lowerText: string, data: any) {
+    // Accumulate all speech into transcript
+    if ((data as any).isFinal !== false) {
+      this.meetingTranscript.addEntry(lowerText);
+    }
+
+    // Only act on final transcriptions with wake word
+    if ((data as any).isFinal === false) return;
+    if (!lowerText.includes(WAKE_WORD)) return;
+
+    const commandPart = this.extractCommandAfterWakeWord(lowerText) ?? '';
+
+    if (this.isMeetingEndCommand(commandPart)) {
+      await this.endMeeting(session);
+      return;
+    }
+
+    if (this.isStopCommand(commandPart)) {
+      await this.audioManager?.cancelCurrentSpeech();
+      session.layouts.showTextWall(USER_MESSAGES.meetingReady);
+      return;
+    }
+
+    if (commandPart.length > MIN_TRANSCRIPTION_LENGTH) {
+      await this.handleMeetingQuery(session, commandPart);
+    }
+  }
+
+  private async handleMeetingQuery(session: AppSession, question: string) {
+    try {
+      await this.audioManager?.cancelCurrentSpeech();
+      const response = await this.meetingUseCase.queryContext(
+        question,
+        this.meetingTranscript,
+        (msg) => session.layouts.showTextWall(msg)
+      );
+      session.layouts.showTextWall(response);
+      await this.audioManager?.speak(response, true);
+    } catch (error) {
+      console.error('[MEETING] Query error:', error);
+      session.layouts.showTextWall(USER_MESSAGES.meetingError);
+      await this.audioManager?.speak(USER_MESSAGES.meetingError, false);
+    }
+  }
+
+  private async endMeeting(session: AppSession) {
+    console.log('[STATE] Ending meeting. Generating summary...');
+    this.state = SessionState.PROCESSING;
+
+    try {
+      await this.audioManager?.cancelCurrentSpeech();
+      session.layouts.showTextWall(USER_MESSAGES.meetingEnded);
+      await this.audioManager?.speak(USER_MESSAGES.meetingEnded, false);
+
+      const summary = await this.meetingUseCase.generateSummary(
+        this.meetingTranscript,
+        (msg) => session.layouts.showTextWall(msg)
+      );
+
+      console.log('[MEETING] Summary generated.');
+      session.layouts.showTextWall(summary);
+      await this.audioManager?.speak(summary, true);
+    } catch (error) {
+      console.error('[MEETING] Summary error:', error);
+      session.layouts.showTextWall(USER_MESSAGES.meetingError);
+      await this.audioManager?.speak(USER_MESSAGES.meetingError, false);
+    } finally {
+      this.meetingTranscript.clear();
+      this.state = SessionState.IDLE;
+      console.log('[STATE] Meeting ended. Back to IDLE.');
+    }
   }
 
   private async processCommand(session: AppSession, text: string) {
@@ -124,6 +200,11 @@ export class SessionHandler {
     const commandPart = this.extractCommandAfterWakeWord(lowerText);
 
     if (commandPart && commandPart.length > MIN_TRANSCRIPTION_LENGTH) {
+      if (this.isMeetingStartCommand(commandPart)) {
+        await this.startMeeting(session);
+        return;
+      }
+
       console.log(`[STATE] Immediate command detected: "${commandPart}"`);
       this.state = SessionState.PROCESSING;
       await this.processCommand(session, commandPart);
@@ -133,6 +214,14 @@ export class SessionHandler {
     console.log('[STATE] No immediate command. Switching to LISTENING.');
     this.state = SessionState.LISTENING;
     await this.transitionToListening(session);
+  }
+
+  private async startMeeting(session: AppSession) {
+    console.log('[STATE] Starting meeting mode.');
+    this.meetingTranscript.clear();
+    this.state = SessionState.MEETING;
+    session.layouts.showTextWall(USER_MESSAGES.meetingStarted);
+    await this.audioManager?.speak(USER_MESSAGES.meetingStarted, false);
   }
 
   private extractCommandAfterWakeWord(text: string): string | undefined {
@@ -152,6 +241,14 @@ export class SessionHandler {
     return VISION_COMMANDS.some(cmd => text.includes(cmd));
   }
 
+  private isMeetingStartCommand(text: string): boolean {
+    return MEETING_START_COMMANDS.some(cmd => text.includes(cmd));
+  }
+
+  private isMeetingEndCommand(text: string): boolean {
+    return MEETING_END_COMMANDS.some(cmd => text.includes(cmd));
+  }
+
   private handleManualTrigger(session: AppSession) {
     if (this.state === SessionState.PROCESSING) return;
     this.state = SessionState.LISTENING;
@@ -166,10 +263,9 @@ export class SessionHandler {
     console.log('Stop command received.');
     this.state = SessionState.IDLE;
     try {
-      // Cancel all audio and stop background listening
       await this.audioManager?.cancelCurrentSpeech();
-      this.audioManager?.stopBackgroundListening();
-      
+      this.audioManager?.startBackgroundListening();
+
       session.layouts.showTextWall(USER_MESSAGES.stopped);
       setTimeout(() => {
         session.layouts.showTextWall(USER_MESSAGES.ready);
@@ -181,7 +277,6 @@ export class SessionHandler {
 
   async handleVoiceRequest(session: AppSession, text: string) {
     try {
-      // Cancel any current speech before starting new response
       await this.audioManager?.cancelCurrentSpeech();
 
       const response = await this.voiceUseCase.execute(text, (msg) => {
@@ -190,8 +285,6 @@ export class SessionHandler {
 
       console.log(`AI Response: ${response}`);
       session.layouts.showTextWall(response);
-      
-      // Speak response (interruptible)
       await this.audioManager?.speak(response, true);
     } catch (error) {
       console.error('Voice Assistant Error:', error);
@@ -202,9 +295,7 @@ export class SessionHandler {
 
   async handleVisionRequest(session: AppSession) {
     try {
-      // Cancel any current speech before starting
       await this.audioManager?.cancelCurrentSpeech();
-      
       session.layouts.showTextWall(USER_MESSAGES.capturing);
 
       const photo = await session.camera.requestPhoto({
@@ -226,8 +317,6 @@ export class SessionHandler {
 
       console.log(`Vision Response: ${response}`);
       session.layouts.showTextWall(response);
-      
-      // Speak response (interruptible)
       await this.audioManager?.speak(response, true);
     } catch (error) {
       console.error('Vision Assistant Error:', error);
