@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm test)",
+      "Bash(npm install)",
+      "Bash(npm run *)",
+      "WebFetch(console.mentraglass.com)",
+      "WebFetch(docs.mentraglass.com)",
+      "WebFetch(github.com)",
+      "Bash(grep *)",
+      "Bash(find *)"
+    ]
+  },
+  "$version": 3
+}
