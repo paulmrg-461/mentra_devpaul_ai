@@ -62,4 +62,34 @@ export class AIRepository implements IAIRepository {
     const data = await response.json();
     return validateAIResponse(data);
   }
+
+  async queryMeeting(question: string, transcript: string): Promise<IAIResponse> {
+    const response = await this.fetchWithTimeout(config.api.queryUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query: question, context: transcript }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`AI Meeting Query API error: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    return validateAIResponse(data);
+  }
+
+  async summarizeMeeting(transcript: string): Promise<IAIResponse> {
+    const response = await this.fetchWithTimeout(config.api.queryUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query: `Summarize this meeting:\n${transcript}` }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`AI Meeting Summary API error: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    return validateAIResponse(data);
+  }
 }

@@ -3,14 +3,14 @@ dotenv.config();
 
 export const config = {
   app: {
-    id: process.env.APP_ID || 'com.iaaplicada.devpaul-ai',
+    id: process.env.APP_ID || 'pro.devpaul.devpaul-ai',
     name: process.env.APP_NAME || 'DevPaul AI',
     port: Number(process.env.PORT) || 3000,
     apiKey: process.env.MENTRAOS_API_KEY || 'local_dev_key',
   },
   api: {
-    queryUrl: process.env.API_URL || 'https://pq48nm3b-1717.use2.devtunnels.ms/api/v1/query',
-    analyzeImageUrl: process.env.ANALYZE_IMAGE_URL || 'https://pq48nm3b-1717.use2.devtunnels.ms/api/v1/analyze-image',
+    queryUrl: process.env.API_URL || 'https://janee-friskier-teetotally.ngrok-free.dev/api/v1/query',
+    analyzeImageUrl: process.env.ANALYZE_IMAGE_URL || 'https://janee-friskier-teetotally.ngrok-free.dev/api/v1/analyze-image',
   },
   groq: {
     apiKey: process.env.GROQ_API_KEY || '',

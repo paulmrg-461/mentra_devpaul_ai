@@ -101,7 +101,7 @@ Create `.env` file:
 ```bash
 # Mentra Configuration
 PORT=3000
-APP_ID=com.iaaplicada.devpaul-ai
+APP_ID=pro.devpaul.devpaul-ai
 APP_NAME=DevPaul AI
 MENTRAOS_API_KEY=your_mentra_api_key
 

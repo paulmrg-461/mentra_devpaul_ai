@@ -1,15 +1,29 @@
 export const WAKE_WORD = 'devpaul';
 
+// STT aliases: es-ES transcribes "devpaul" as "deadpool"
+export const WAKE_WORDS = ['devpaul', 'deadpool', 'dev paul', 'de paul'];
+
 export const STOP_COMMANDS = ['detente', 'para'];
 
-export const VISION_COMMANDS = [
-  'take a photo',
+// Capture only — no immediate analysis, waits for follow-up question
+export const PHOTO_CAPTURE_COMMANDS = [
   'toma una foto',
   'toma foto',
+  'saca una foto',
+  'saca foto',
+  'captura foto',
+  'take a photo',
+  'take photo',
+];
+
+// Capture + immediate generic description
+export const VISION_COMMANDS = [
   'analiza esto',
   'describe esto',
   'qué ves',
   'what do you see',
+  'qué hay aquí',
+  'lee esto',
 ];
 
 export const MEETING_START_COMMANDS = [
@@ -36,6 +50,10 @@ export const MEETING_END_COMMANDS = [
 
 export const MIN_TRANSCRIPTION_LENGTH = 2;
 
+export const FOLLOW_UP_TIMEOUT_MS = 10_000;
+export const LISTENING_TIMEOUT_MS = 15_000;
+export const PHOTO_READY_TIMEOUT_MS = 20_000;
+
 export const PROCESSING_MESSAGES = {
   voice: 'Processing query...',
   vision: 'Analyzing scene...',
@@ -53,6 +71,9 @@ export const USER_MESSAGES = {
   visionError: 'Fallo en el análisis de visión.',
   noTranscription: 'No te escuché bien, intenta de nuevo.',
   photoError: 'Error al capturar la foto.',
+  photoReady: 'Foto capturada. ¿Qué quieres saber?',
+  photoContextActive: 'Foto lista. Pregúntame.',
+  followUpListening: '...',
   meetingStarted: 'Reunión iniciada. Escuchando y transcribiendo.',
   meetingEnded: 'Reunión terminada. Generando resumen...',
   meetingReady: 'En reunión. Di "DevPaul" para consultar.',
