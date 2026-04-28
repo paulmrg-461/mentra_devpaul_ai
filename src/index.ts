@@ -18,11 +18,25 @@ const sessionHandler = new SessionHandler(voiceUseCase, visionUseCase, meetingUs
 
 const server = new MentraDevPaulAppServer(sessionHandler);
 
+process.on('uncaughtException', (err) => {
+  console.error('[FATAL] Uncaught exception:', err);
+  process.exit(1);
+});
+
+process.on('unhandledRejection', (reason) => {
+  console.error('[FATAL] Unhandled rejection:', reason);
+  process.exit(1);
+});
+
 if (process.env.NODE_ENV !== 'test') {
+  console.log('[STARTUP] Starting server...');
+  console.log(`[STARTUP] Provider: ${config.ai.provider}`);
   server.start().then(() => {
-    console.log(`${config.app.name} server started on port ${config.app.port}`);
-    console.log(`🎯 Provider: ${config.ai.provider}`);
-    console.log(`🎤 Background audio + meeting mode enabled`);
+    console.log(`[STARTUP] ${config.app.name} server started on port ${config.app.port}`);
+    console.log(`[STARTUP] Provider: ${config.ai.provider}`);
+  }).catch((err: unknown) => {
+    console.error('[FATAL] server.start() failed:', err);
+    process.exit(1);
   });
 }
 

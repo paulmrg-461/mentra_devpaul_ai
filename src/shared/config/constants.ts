@@ -49,6 +49,7 @@ export const MEETING_END_COMMANDS = [
 ];
 
 export const MIN_TRANSCRIPTION_LENGTH = 2;
+export const NONFINAL_MIN_LENGTH = 20; // chars needed to trigger processing on non-final (continuous mode)
 
 export const FOLLOW_UP_TIMEOUT_MS = 10_000;
 export const LISTENING_TIMEOUT_MS = 15_000;
@@ -79,4 +80,6 @@ export const USER_MESSAGES = {
   meetingEnded: 'Reunión terminada. Generando resumen...',
   meetingReady: 'En reunión. Di "DevPaul" para consultar.',
   meetingError: 'Error generando resumen de reunión.',
+  continuousOn: 'Modo continuo activado. Habla libremente.',
+  continuousOff: 'Modo continuo desactivado.',
 } as const;

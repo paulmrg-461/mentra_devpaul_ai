@@ -1,5 +1,5 @@
 import { IAIRepository } from '../../domain/repositories/ai-repository.interface.js';
-import { IAIResponse, IImageAnalysisRequest } from '../../domain/entities/ai.js';
+import { IAIResponse, IImageAnalysisRequest, ConversationTurn } from '../../domain/entities/ai.js';
 import { config } from '../../shared/config/env.js';
 
 const API_TIMEOUT_MS = 30000; // 30s timeout for Groq API
@@ -38,7 +38,7 @@ export class GroqAIRepository implements IAIRepository {
   /**
    * Query Groq API with text
    */
-  async query(text: string): Promise<IAIResponse> {
+  async query(text: string, history: ConversationTurn[] = []): Promise<IAIResponse> {
     const systemPrompt = config.ai.systemPrompt;
 
     const response = await this.fetchWithTimeout(config.groq.apiUrl, {
@@ -47,13 +47,14 @@ export class GroqAIRepository implements IAIRepository {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: this.model,
+        model: config.groq.voiceModel,
         messages: [
           { role: 'system', content: systemPrompt },
+          ...history,
           { role: 'user', content: text },
         ],
         temperature: 0.7,
-        max_tokens: 500,
+        max_tokens: 150,
       }),
     });
 
@@ -192,7 +193,8 @@ export class GroqAIRepository implements IAIRepository {
    */
   async queryStream(
     text: string,
-    onChunk: (chunk: string) => void
+    onChunk: (chunk: string) => void,
+    history: ConversationTurn[] = []
   ): Promise<IAIResponse> {
     const systemPrompt = config.ai.systemPrompt;
 
@@ -202,13 +204,14 @@ export class GroqAIRepository implements IAIRepository {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: this.model,
+        model: config.groq.voiceModel,
         messages: [
           { role: 'system', content: systemPrompt },
+          ...history,
           { role: 'user', content: text },
         ],
         temperature: 0.7,
-        max_tokens: 500,
+        max_tokens: 150,
         stream: true,
       }),
     });

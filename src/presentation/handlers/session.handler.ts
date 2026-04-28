@@ -3,6 +3,7 @@ import { VoiceAssistantUseCase } from '../../domain/use-cases/voice-assistant.us
 import { VisionAssistantUseCase } from '../../domain/use-cases/vision-assistant.use-case.js';
 import { MeetingAssistantUseCase } from '../../domain/use-cases/meeting-assistant.use-case.js';
 import { MeetingTranscript } from '../../domain/entities/meeting-transcript.js';
+import { ConversationTurn } from '../../domain/entities/ai.js';
 import {
   WAKE_WORDS,
   STOP_COMMANDS,
@@ -15,6 +16,7 @@ import {
   LISTENING_TIMEOUT_MS,
   PHOTO_READY_TIMEOUT_MS,
   PROCESSING_TIMEOUT_MS,
+  NONFINAL_MIN_LENGTH,
   USER_MESSAGES,
 } from '../../shared/config/constants.js';
 import { AudioSessionManager } from './audio-session.manager.js';
@@ -27,6 +29,8 @@ export enum SessionState {
   PHOTO_READY,
 }
 
+const MAX_HISTORY_TURNS = 5;
+
 export class SessionHandler {
   private state: SessionState = SessionState.IDLE;
   private audioManager: AudioSessionManager | null = null;
@@ -35,6 +39,8 @@ export class SessionHandler {
   private photoReadyTimer: NodeJS.Timeout | null = null;
   private processingWatchdog: NodeJS.Timeout | null = null;
   private currentSession: AppSession | null = null;
+  private conversationHistory: ConversationTurn[] = [];
+  private continuousMode = false;
 
   constructor(
     private voiceUseCase: VoiceAssistantUseCase,
@@ -92,6 +98,14 @@ export class SessionHandler {
         this.handleManualTrigger(session);
       } else if (payload.action === 'photo') {
         await this.handleDoubleTap(session);
+      } else if (payload.action === 'meeting') {
+        if (this.state === SessionState.MEETING) {
+          await this.endMeeting(session);
+        } else {
+          await this.startMeeting(session);
+        }
+      } else if (payload.action === 'continuous') {
+        this.toggleContinuousMode(session);
       } else if (payload.action === 'stop') {
         await this.handleStop(session);
       }
@@ -107,13 +121,23 @@ export class SessionHandler {
   ): Promise<void> {
     switch (this.state) {
       case SessionState.IDLE:
-        if (!isFinal) return;
-        await this.handleIdleState(session, lowerText);
+        if (!isFinal) {
+          if (this.continuousMode && lowerText.trim().length >= NONFINAL_MIN_LENGTH) {
+            await this.handleIdleState(session, lowerText);
+          }
+          return;
+        }
+        if (this.state === SessionState.IDLE) await this.handleIdleState(session, lowerText);
         return;
 
       case SessionState.LISTENING:
-        if (!isFinal) return;
-        await this.handleListeningState(session, lowerText);
+        if (!isFinal) {
+          if (this.continuousMode && lowerText.trim().length >= NONFINAL_MIN_LENGTH) {
+            await this.handleListeningState(session, lowerText);
+          }
+          return;
+        }
+        if (this.state === SessionState.LISTENING) await this.handleListeningState(session, lowerText);
         return;
 
       case SessionState.PHOTO_READY:
@@ -136,10 +160,15 @@ export class SessionHandler {
   // ─── State handlers ─────────────────────────────────────────────────────────
 
   private async handleIdleState(session: AppSession, lowerText: string): Promise<void> {
-    if (!this.detectWakeWord(lowerText)) return;
-    console.log('[STATE] Wake word detected.');
+    const hasWakeWord = this.detectWakeWord(lowerText);
 
-    const commandPart = this.extractCommandAfterWakeWord(lowerText);
+    if (!hasWakeWord && !this.continuousMode) return;
+
+    const commandPart = hasWakeWord
+      ? this.extractCommandAfterWakeWord(lowerText)
+      : lowerText;
+
+    if (hasWakeWord) console.log('[STATE] Wake word detected.');
 
     if (commandPart && commandPart.length > MIN_TRANSCRIPTION_LENGTH) {
       if (this.isMeetingStartCommand(commandPart)) {
@@ -151,8 +180,10 @@ export class SessionHandler {
       return;
     }
 
-    console.log('[STATE] Switching to LISTENING.');
-    await this.transitionToListening(session);
+    if (!this.continuousMode) {
+      console.log('[STATE] Switching to LISTENING.');
+      await this.transitionToListening(session);
+    }
   }
 
   private async handleListeningState(session: AppSession, lowerText: string): Promise<void> {
@@ -237,7 +268,7 @@ export class SessionHandler {
 
     if (this.isStopCommand(commandPart)) {
       await this.audioManager?.cancelCurrentSpeech();
-      session.layouts.showTextWall(USER_MESSAGES.meetingReady);
+      this.showText(session, USER_MESSAGES.meetingReady);
       return;
     }
 
@@ -297,13 +328,13 @@ export class SessionHandler {
       const response = await this.meetingUseCase.queryContext(
         question,
         this.meetingTranscript,
-        (msg) => session.layouts.showTextWall(msg)
+        (msg) => this.showText(session, msg)
       );
-      session.layouts.showTextWall(response);
+      this.showText(session, response);
       await this.audioManager?.speak(response, true);
     } catch (error) {
       console.error('[MEETING] Query error:', error);
-      session.layouts.showTextWall(USER_MESSAGES.meetingError);
+      this.showText(session, USER_MESSAGES.meetingError);
       await this.audioManager?.speak(USER_MESSAGES.meetingError, false);
     }
   }
@@ -314,18 +345,18 @@ export class SessionHandler {
     this.startProcessingWatchdog(session);
     try {
       await this.audioManager?.cancelCurrentSpeech();
-      session.layouts.showTextWall(USER_MESSAGES.meetingEnded);
+      this.showText(session, USER_MESSAGES.meetingEnded);
       await this.audioManager?.speak(USER_MESSAGES.meetingEnded, false);
 
       const summary = await this.meetingUseCase.generateSummary(
         this.meetingTranscript,
-        (msg) => session.layouts.showTextWall(msg)
+        (msg) => this.showText(session, msg)
       );
-      session.layouts.showTextWall(summary);
+      this.showText(session, summary);
       await this.audioManager?.speak(summary, true);
     } catch (error) {
       console.error('[MEETING] Summary error:', error);
-      session.layouts.showTextWall(USER_MESSAGES.meetingError);
+      this.showText(session, USER_MESSAGES.meetingError);
       await this.audioManager?.speak(USER_MESSAGES.meetingError, false);
     } finally {
       this.clearProcessingWatchdog();
@@ -337,7 +368,7 @@ export class SessionHandler {
   private async startMeeting(session: AppSession): Promise<void> {
     this.meetingTranscript.clear();
     this.transitionTo(SessionState.MEETING, 'meeting started');
-    session.layouts.showTextWall(USER_MESSAGES.meetingStarted);
+    this.showText(session, USER_MESSAGES.meetingStarted);
     await this.audioManager?.speak(USER_MESSAGES.meetingStarted, false);
   }
 
@@ -346,12 +377,12 @@ export class SessionHandler {
   async handleVisionRequest(session: AppSession, question?: string): Promise<void> {
     try {
       await this.audioManager?.cancelCurrentSpeech();
-      session.layouts.showTextWall(USER_MESSAGES.capturing);
+      this.showText(session, USER_MESSAGES.capturing);
 
       const photo = await session.camera.requestPhoto({ size: 'medium', saveToGallery: false });
 
       if (!photo || !photo.buffer) {
-        session.layouts.showTextWall(USER_MESSAGES.photoError);
+        this.showText(session, USER_MESSAGES.photoError);
         await this.audioManager?.speak(USER_MESSAGES.photoError, false);
         return;
       }
@@ -360,15 +391,15 @@ export class SessionHandler {
 
       const response = await this.visionUseCase.execute(
         this.lastCapturedPhoto,
-        (msg) => session.layouts.showTextWall(msg),
+        (msg) => this.showText(session, msg),
         question
       );
 
-      session.layouts.showTextWall(response);
+      this.showText(session, response);
       await this.audioManager?.speak(response, true);
     } catch (error) {
       console.error('[VISION] Error:', error);
-      session.layouts.showTextWall(USER_MESSAGES.visionError);
+      this.showText(session, USER_MESSAGES.visionError);
       await this.audioManager?.speak(USER_MESSAGES.visionError, false);
     }
   }
@@ -376,25 +407,25 @@ export class SessionHandler {
   private async handlePhotoCaptureOnly(session: AppSession): Promise<void> {
     try {
       await this.audioManager?.cancelCurrentSpeech();
-      session.layouts.showTextWall(USER_MESSAGES.capturing);
+      this.showText(session, USER_MESSAGES.capturing);
 
       const photo = await session.camera.requestPhoto({ size: 'medium', saveToGallery: false });
 
       if (!photo || !photo.buffer) {
-        session.layouts.showTextWall(USER_MESSAGES.photoError);
+        this.showText(session, USER_MESSAGES.photoError);
         await this.audioManager?.speak(USER_MESSAGES.photoError, false);
         this.transitionTo(SessionState.IDLE, 'photo capture failed');
         return;
       }
 
       this.lastCapturedPhoto = photo.buffer.toString('base64');
-      session.layouts.showTextWall(USER_MESSAGES.photoReady);
+      this.showText(session, USER_MESSAGES.photoReady);
       await this.audioManager?.speak(USER_MESSAGES.photoReady, false);
 
       this.startPhotoReadyListening(session);
     } catch (error) {
       console.error('[PHOTO] Capture error:', error);
-      session.layouts.showTextWall(USER_MESSAGES.photoError);
+      this.showText(session, USER_MESSAGES.photoError);
       await this.audioManager?.speak(USER_MESSAGES.photoError, false);
       this.transitionTo(SessionState.IDLE, 'photo capture exception');
     }
@@ -412,15 +443,15 @@ export class SessionHandler {
 
       const response = await this.visionUseCase.execute(
         this.lastCapturedPhoto,
-        (msg) => session.layouts.showTextWall(msg),
+        (msg) => this.showText(session, msg),
         question
       );
 
-      session.layouts.showTextWall(response);
+      this.showText(session, response);
       await this.audioManager?.speak(response, true);
     } catch (error) {
       console.error('[PHOTO] Question error:', error);
-      session.layouts.showTextWall(USER_MESSAGES.visionError);
+      this.showText(session, USER_MESSAGES.visionError);
       await this.audioManager?.speak(USER_MESSAGES.visionError, false);
     }
   }
@@ -431,15 +462,24 @@ export class SessionHandler {
     try {
       await this.audioManager?.cancelCurrentSpeech();
 
-      const response = await this.voiceUseCase.execute(text, (msg) => {
-        session.layouts.showTextWall(msg);
-      });
+      let fullResponse = '';
+      fullResponse = await this.voiceUseCase.executeStreaming(
+        text,
+        (msg) => this.showText(session, msg),
+        async (sentence) => {
+          this.showText(session, sentence);
+          await this.audioManager?.speak(sentence, true);
+        },
+        this.conversationHistory
+      );
 
-      session.layouts.showTextWall(response);
-      await this.audioManager?.speak(response, true);
+      this.showText(session, fullResponse);
+      this.addToHistory(text, fullResponse);
     } catch (error) {
+      const msg = (error as Error).message || '';
+      if (msg.includes('cancelled') || msg.includes('cleanup')) return;
       console.error('[VOICE] Error:', error);
-      session.layouts.showTextWall(USER_MESSAGES.voiceError);
+      this.showText(session, USER_MESSAGES.voiceError);
       await this.audioManager?.speak(USER_MESSAGES.voiceError, false);
     }
   }
@@ -450,16 +490,17 @@ export class SessionHandler {
     console.log('[STATE] Stop requested.');
     this.clearAllTimers();
     this.lastCapturedPhoto = null;
+    this.conversationHistory = [];
     this.transitionTo(SessionState.IDLE, 'stop command');
 
     try {
       await this.audioManager?.cancelCurrentSpeech();
       this.audioManager?.startBackgroundListening();
 
-      session.layouts.showTextWall(USER_MESSAGES.stopped);
+      this.showText(session, USER_MESSAGES.stopped);
       setTimeout(() => {
         if (this.state === SessionState.IDLE) {
-          session.layouts.showTextWall(USER_MESSAGES.ready);
+          this.showText(session, USER_MESSAGES.ready);
         }
       }, 1500);
     } catch (error) {
@@ -475,7 +516,7 @@ export class SessionHandler {
     this.clearFollowUpTimer();
     this.clearPhotoReadyTimer();
     this.transitionTo(SessionState.LISTENING, 'manual trigger');
-    session.layouts.showTextWall(USER_MESSAGES.listening);
+    this.showText(session, USER_MESSAGES.listening);
   }
 
   async handleButtonPress(session: AppSession): Promise<void> {
@@ -499,6 +540,37 @@ export class SessionHandler {
     }
   }
 
+  // ─── History & mode helpers ───────────────────────────────────────────────────
+
+  private addToHistory(userText: string, assistantText: string): void {
+    this.conversationHistory.push({ role: 'user', content: userText });
+    this.conversationHistory.push({ role: 'assistant', content: assistantText });
+    if (this.conversationHistory.length > MAX_HISTORY_TURNS * 2) {
+      this.conversationHistory = this.conversationHistory.slice(-MAX_HISTORY_TURNS * 2);
+    }
+  }
+
+  private toggleContinuousMode(session: AppSession): void {
+    this.continuousMode = !this.continuousMode;
+    const msg = this.continuousMode ? USER_MESSAGES.continuousOn : USER_MESSAGES.continuousOff;
+    console.log(`[MODE] Continuous mode: ${this.continuousMode}`);
+    this.showText(session, msg);
+    this.audioManager?.speak(msg, false);
+    if (this.continuousMode && this.state === SessionState.IDLE) {
+      this.transitionTo(SessionState.LISTENING, 'continuous mode on');
+    }
+  }
+
+  // ─── Safe layout helper ───────────────────────────────────────────────────────
+
+  private showText(session: AppSession, msg: string): void {
+    try {
+      session.layouts.showTextWall(msg);
+    } catch {
+      // WebSocket closed — phone screen locked or session ended
+    }
+  }
+
   // ─── Transitions ─────────────────────────────────────────────────────────────
 
   private transitionTo(next: SessionState, reason: string): void {
@@ -509,13 +581,13 @@ export class SessionHandler {
 
   private async transitionToListening(session: AppSession): Promise<void> {
     this.transitionTo(SessionState.LISTENING, 'wake word alone');
-    session.layouts.showTextWall(USER_MESSAGES.idle);
+    this.showText(session, USER_MESSAGES.idle);
     await this.audioManager?.speak(USER_MESSAGES.idle, false);
 
     this.followUpTimer = setTimeout(() => {
       if (this.state === SessionState.LISTENING) {
         this.transitionTo(SessionState.IDLE, 'listening timeout');
-        session.layouts.showTextWall(USER_MESSAGES.ready);
+        this.showText(session, USER_MESSAGES.ready);
       }
     }, LISTENING_TIMEOUT_MS);
   }
@@ -523,12 +595,15 @@ export class SessionHandler {
   private startFollowUpListening(session: AppSession): void {
     this.clearFollowUpTimer();
     this.transitionTo(SessionState.LISTENING, 'follow-up window');
-    session.layouts.showTextWall(USER_MESSAGES.followUpListening);
+    this.showText(session, USER_MESSAGES.followUpListening);
+
+    if (this.continuousMode) return; // stay in LISTENING indefinitely
 
     this.followUpTimer = setTimeout(() => {
       if (this.state === SessionState.LISTENING) {
         this.transitionTo(SessionState.IDLE, 'follow-up expired');
-        session.layouts.showTextWall(USER_MESSAGES.ready);
+        this.conversationHistory = [];
+        this.showText(session, USER_MESSAGES.ready);
       }
     }, FOLLOW_UP_TIMEOUT_MS);
   }
@@ -536,13 +611,13 @@ export class SessionHandler {
   private startPhotoReadyListening(session: AppSession): void {
     this.clearPhotoReadyTimer();
     this.transitionTo(SessionState.PHOTO_READY, 'photo context active');
-    session.layouts.showTextWall(USER_MESSAGES.photoContextActive);
+    this.showText(session, USER_MESSAGES.photoContextActive);
 
     this.photoReadyTimer = setTimeout(() => {
       if (this.state === SessionState.PHOTO_READY) {
         this.lastCapturedPhoto = null;
         this.transitionTo(SessionState.IDLE, 'photo context expired');
-        session.layouts.showTextWall(USER_MESSAGES.ready);
+        this.showText(session, USER_MESSAGES.ready);
       }
     }, PHOTO_READY_TIMEOUT_MS);
   }
@@ -565,7 +640,7 @@ export class SessionHandler {
     try {
       this.audioManager?.cancelCurrentSpeech();
       this.audioManager?.startBackgroundListening();
-      session.layouts.showTextWall(USER_MESSAGES.ready);
+      this.showText(session, USER_MESSAGES.ready);
     } catch (err) {
       console.error('[STATE] Error in recoverToIdle:', err);
     }

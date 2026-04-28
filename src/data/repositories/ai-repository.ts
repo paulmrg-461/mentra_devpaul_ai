@@ -33,7 +33,11 @@ export class AIRepository implements IAIRepository {
     }
   }
 
-  async query(text: string): Promise<IAIResponse> {
+  async queryStream(_text: string, _onChunk: (chunk: string) => void, _history?: unknown[]): Promise<IAIResponse> {
+    throw new Error('queryStream not supported in REST AIRepository');
+  }
+
+  async query(text: string, _history?: unknown[]): Promise<IAIResponse> {
     const response = await this.fetchWithTimeout(config.api.queryUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

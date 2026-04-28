@@ -1,5 +1,5 @@
 import { IAIRepository } from '../../domain/repositories/ai-repository.interface.js';
-import { IAIResponse, IImageAnalysisRequest } from '../../domain/entities/ai.js';
+import { IAIResponse, IImageAnalysisRequest, ConversationTurn } from '../../domain/entities/ai.js';
 import { config } from '../../shared/config/env.js';
 
 const API_TIMEOUT_MS = 30000;
@@ -66,14 +66,70 @@ export class OpenRouterAIRepository implements IAIRepository {
     return content.trim();
   }
 
-  async query(text: string): Promise<IAIResponse> {
+  async queryStream(text: string, onChunk: (chunk: string) => void, history: ConversationTurn[] = []): Promise<IAIResponse> {
+    const response = await this.fetchWithTimeout(this.apiUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: this.textModel,
+        messages: [
+          { role: 'system', content: config.ai.systemPrompt },
+          ...history,
+          { role: 'user', content: text },
+        ],
+        temperature: 0.7,
+        max_tokens: 150,
+        stream: true,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`OpenRouter stream error: ${response.statusText} - ${errorText}`);
+    }
+
+    if (!response.body) throw new Error('No response body for streaming');
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let fullResponse = '';
+
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value);
+        for (const line of chunk.split('\n')) {
+          if (!line.startsWith('data: ')) continue;
+          const data = line.slice(6);
+          if (data === '[DONE]') continue;
+          try {
+            const parsed = JSON.parse(data);
+            const content = parsed.choices?.[0]?.delta?.content;
+            if (content) {
+              fullResponse += content;
+              onChunk(content);
+            }
+          } catch { /* skip invalid JSON */ }
+        }
+      }
+    } finally {
+      reader.releaseLock();
+    }
+
+    return { response: fullResponse };
+  }
+
+  async query(text: string, history: ConversationTurn[] = []): Promise<IAIResponse> {
     const response = await this.callChatAPI(
       this.textModel,
       [
         { role: 'system', content: config.ai.systemPrompt },
+        ...history,
         { role: 'user', content: text },
       ],
-      { temperature: 0.7, max_tokens: 500 }
+      { temperature: 0.7, max_tokens: 150 }
     );
 
     return { response };

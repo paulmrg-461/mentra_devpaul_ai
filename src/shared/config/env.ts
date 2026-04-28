@@ -22,6 +22,7 @@ export const config = {
   groq: {
     apiKey: process.env.GROQ_API_KEY || '',
     model: process.env.GROQ_MODEL || 'llama-3.3-70b-versatile',
+    voiceModel: process.env.GROQ_VOICE_MODEL || 'llama-3.1-8b-instant',
     apiUrl: process.env.GROQ_API_URL || 'https://api.groq.com/openai/v1/chat/completions',
     streamUrl: process.env.GROQ_STREAM_URL || 'https://api.groq.com/openai/v1/chat/completions',
   },

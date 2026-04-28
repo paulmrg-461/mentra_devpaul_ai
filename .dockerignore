@@ -5,4 +5,6 @@ dist
 .git
 .gitignore
 **/*.test.ts
+__mocks__
 coverage
+fly.toml
