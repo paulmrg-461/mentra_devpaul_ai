@@ -53,6 +53,7 @@ export const MIN_TRANSCRIPTION_LENGTH = 2;
 export const FOLLOW_UP_TIMEOUT_MS = 10_000;
 export const LISTENING_TIMEOUT_MS = 15_000;
 export const PHOTO_READY_TIMEOUT_MS = 20_000;
+export const PROCESSING_TIMEOUT_MS = 40_000;
 
 export const PROCESSING_MESSAGES = {
   voice: 'Processing query...',
