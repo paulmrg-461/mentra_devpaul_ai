@@ -8,13 +8,15 @@ global.fetch = mockFetch;
 // Mock config
 vi.mock('../../shared/config/env.js', () => ({
   config: {
+    ai: {
+      systemPrompt: 'Test system prompt',
+      visionSystemPrompt: 'Test vision prompt',
+    },
     groq: {
       apiKey: 'test-api-key',
       model: 'llama-3.3-70b-versatile',
       apiUrl: 'https://api.groq.com/openai/v1/chat/completions',
       streamUrl: 'https://api.groq.com/openai/v1/chat/completions',
-      systemPrompt: 'Test system prompt',
-      visionSystemPrompt: 'Test vision prompt',
     },
   },
 }));

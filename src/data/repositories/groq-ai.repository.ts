@@ -39,8 +39,7 @@ export class GroqAIRepository implements IAIRepository {
    * Query Groq API with text
    */
   async query(text: string): Promise<IAIResponse> {
-    const systemPrompt = config.groq.systemPrompt || 
-      'Eres DevPaul, un asistente de IA amigable y útil. Responde de forma concisa y clara.';
+    const systemPrompt = config.ai.systemPrompt;
 
     const response = await this.fetchWithTimeout(config.groq.apiUrl, {
       method: 'POST',
@@ -78,8 +77,7 @@ export class GroqAIRepository implements IAIRepository {
    * Analyze image using Groq's vision capabilities
    */
   async analyzeImage(request: IImageAnalysisRequest): Promise<IAIResponse> {
-    const systemPrompt = config.groq.visionSystemPrompt ||
-      'Describe lo que ves en esta imagen de forma breve y clara.';
+    const systemPrompt = config.ai.visionSystemPrompt;
 
     const response = await this.fetchWithTimeout(config.groq.apiUrl, {
       method: 'POST',
@@ -196,8 +194,7 @@ export class GroqAIRepository implements IAIRepository {
     text: string,
     onChunk: (chunk: string) => void
   ): Promise<IAIResponse> {
-    const systemPrompt = config.groq.systemPrompt ||
-      'Eres DevPaul, un asistente de IA amigable y útil. Responde de forma concisa y clara.';
+    const systemPrompt = config.ai.systemPrompt;
 
     const response = await this.fetchWithTimeout(config.groq.streamUrl || config.groq.apiUrl, {
       method: 'POST',
