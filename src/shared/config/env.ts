@@ -9,7 +9,7 @@ export const config = {
     apiKey: process.env.MENTRAOS_API_KEY || 'local_dev_key',
   },
   ai: {
-    provider: (process.env.AI_PROVIDER || 'groq') as 'groq' | 'openrouter',
+    provider: (process.env.AI_PROVIDER || 'groq') as 'groq' | 'openrouter' | 'api',
     systemPrompt: process.env.AI_SYSTEM_PROMPT ||
       'Eres DevPaul, un asistente de IA amigable y útil. Responde de forma concisa y clara en español.',
     visionSystemPrompt: process.env.AI_VISION_SYSTEM_PROMPT ||

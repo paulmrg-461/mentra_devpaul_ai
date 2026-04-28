@@ -33,8 +33,47 @@ export class AIRepository implements IAIRepository {
     }
   }
 
-  async queryStream(_text: string, _onChunk: (chunk: string) => void, _history?: unknown[]): Promise<IAIResponse> {
-    throw new Error('queryStream not supported in REST AIRepository');
+  async queryStream(text: string, onChunk: (chunk: string) => void, _history?: unknown[]): Promise<IAIResponse> {
+    const streamUrl = config.api.queryUrl.replace(/\/query$/, '/query/stream');
+
+    const response = await this.fetchWithTimeout(streamUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query: text }),
+    });
+
+    if (!response.ok || !response.body) {
+      throw new Error(`Stream error: ${response.statusText}`);
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let fullResponse = '';
+
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const lines = decoder.decode(value, { stream: true }).split('\n');
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue;
+          const data = line.slice(6).trim();
+          if (data === '[DONE]') break;
+          try {
+            const parsed = JSON.parse(data) as { chunk?: string; error?: string };
+            if (parsed.error) throw new Error(parsed.error);
+            if (parsed.chunk) { fullResponse += parsed.chunk; onChunk(parsed.chunk); }
+          } catch (e: any) {
+            if (e.message && !e.message.startsWith('Unexpected token')) throw e;
+          }
+        }
+      }
+    } finally {
+      reader.releaseLock();
+    }
+
+    return { response: fullResponse };
   }
 
   async query(text: string, _history?: unknown[]): Promise<IAIResponse> {
