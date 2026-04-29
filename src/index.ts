@@ -4,7 +4,7 @@ import { VisionAssistantUseCase } from './domain/use-cases/vision-assistant.use-
 import { MeetingAssistantUseCase } from './domain/use-cases/meeting-assistant.use-case.js';
 import { MeetingTranscript } from './domain/entities/meeting-transcript.js';
 import { SessionHandler } from './presentation/handlers/session.handler.js';
-import { MentraDevPaulAppServer } from './presentation/server/devpaul-server.js';
+import { NumaAppServer } from './presentation/server/numa-server.js';
 import { config } from './shared/config/env.js';
 
 const aiRepository = createAIRepository();
@@ -16,7 +16,7 @@ const meetingTranscript = new MeetingTranscript();
 
 const sessionHandler = new SessionHandler(voiceUseCase, visionUseCase, meetingUseCase, meetingTranscript);
 
-const server = new MentraDevPaulAppServer(sessionHandler);
+const server = new NumaAppServer(sessionHandler);
 
 process.on('uncaughtException', (err) => {
   console.error('[FATAL] Uncaught exception:', err);

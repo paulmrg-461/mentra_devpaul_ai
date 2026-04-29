@@ -1,4 +1,4 @@
-# DevPaul AI Architecture - Optimized for Background Audio & Groq
+# Numa AI Architecture - Optimized for Background Audio & Groq
 
 ## System Architecture Diagram
 
@@ -11,7 +11,7 @@ graph TB
         E[Display] <--|Text/UI| B
     end
     
-    subgraph "DevPaul AI Application"
+    subgraph "Numa AI Application"
         B --> F[SessionHandler]
         F --> G[AudioSessionManager]
         F --> H[VoiceAssistantUseCase]
@@ -31,7 +31,7 @@ graph TB
     end
     
     subgraph "Interaction Flow"
-        R[User: "DevPaul"] -->|Wake Word| F
+        R[User: "Numa"] -->|Wake Word| F
         S[User: Question] -->|Transcription| L
         T[Stop Command] -->|Priority Interrupt| M
         U[Double Tap] -->|Vision Request| I
@@ -44,8 +44,8 @@ graph TB
 stateDiagram-v2
     [*] --> IDLE
     
-    IDLE --> LISTENING: Wake Word "DevPaul"
-    IDLE --> PROCESSING: Direct Command ("DevPaul + cmd")
+    IDLE --> LISTENING: Wake Word "Numa"
+    IDLE --> PROCESSING: Direct Command ("Numa + cmd")
     IDLE --> IDLE: Stop Command
     
     LISTENING --> PROCESSING: Final Transcription
@@ -84,7 +84,7 @@ sequenceDiagram
     participant GRQ as GroqAIRepository
     participant API as Groq Cloud
     
-    U->>HW: Say "DevPaul"
+    U->>HW: Say "Numa"
     HW->>ASM: Transcription received
     ASM->>ASM: Buffer transcription
     ASM->>SH: Wake word detected

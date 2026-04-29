@@ -1,7 +1,7 @@
-export const WAKE_WORD = 'devpaul';
+export const WAKE_WORD = 'numa';
 
-// STT aliases: es-ES transcribes "devpaul" as "deadpool"
-export const WAKE_WORDS = ['devpaul', 'deadpool', 'dev paul', 'de paul'];
+// STT aliases: es-ES transcribes "numa" as "deadpool"
+export const WAKE_WORDS = ['numa', 'uma', 'muma', 'juma', 'puma', 'no mas', 'no ma'];
 
 export const STOP_COMMANDS = ['detente', 'para'];
 
@@ -68,7 +68,7 @@ export const USER_MESSAGES = {
   listening: 'Escuchando...',
   capturing: 'Capturando foto...',
   stopped: 'Detenido.',
-  ready: 'DevPaul ready.',
+  ready: 'Numa ready.',
   voiceError: 'Fallo en el asistente de voz.',
   visionError: 'Fallo en el análisis de visión.',
   noTranscription: 'No te escuché bien, intenta de nuevo.',
@@ -78,7 +78,7 @@ export const USER_MESSAGES = {
   followUpListening: '...',
   meetingStarted: 'Reunión iniciada. Escuchando y transcribiendo.',
   meetingEnded: 'Reunión terminada. Generando resumen...',
-  meetingReady: 'En reunión. Di "DevPaul" para consultar.',
+  meetingReady: 'En reunión. Di "Numa" para consultar.',
   meetingError: 'Error generando resumen de reunión.',
   continuousOn: 'Modo continuo activado. Habla libremente.',
   continuousOff: 'Modo continuo desactivado.',

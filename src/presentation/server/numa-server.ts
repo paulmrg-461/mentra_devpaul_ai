@@ -13,7 +13,7 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-export class MentraDevPaulAppServer extends ActualAppServer {
+export class NumaAppServer extends ActualAppServer {
   constructor(private sessionHandler: SessionHandler) {
     super({
       packageName: config.app.id,
@@ -306,7 +306,7 @@ export class MentraDevPaulAppServer extends ActualAppServer {
   <div class="card">
 
     <!-- Header -->
-    <img src="/public/devpaul_ai_logo.png" alt="DevPaul AI" class="logo">
+    <img src="/public/numa_ai_logo.jpg" alt="Numa AI" class="logo">
     <h1>${config.app.name}</h1>
     <div class="tagline">Red de Recuerdos</div>
 
@@ -326,8 +326,8 @@ export class MentraDevPaulAppServer extends ActualAppServer {
         </button>
         <div class="tooltip">
           <div class="tooltip-title">Comando de voz</div>
-          <code class="tooltip-cmd">"devpaul [pregunta]"</code>
-          <code class="tooltip-cmd">"devpaul ¿qué hora es?"</code>
+          <code class="tooltip-cmd">"numa [pregunta]"</code>
+          <code class="tooltip-cmd">"numa ¿qué hora es?"</code>
           <div class="tooltip-hw">O presiona el botón derecho</div>
         </div>
       </div>
@@ -340,9 +340,9 @@ export class MentraDevPaulAppServer extends ActualAppServer {
         </button>
         <div class="tooltip">
           <div class="tooltip-title">Comandos de voz</div>
-          <code class="tooltip-cmd">"devpaul toma foto"</code>
-          <code class="tooltip-cmd">"devpaul analiza esto"</code>
-          <code class="tooltip-cmd">"devpaul describe esto"</code>
+          <code class="tooltip-cmd">"numa toma foto"</code>
+          <code class="tooltip-cmd">"numa analiza esto"</code>
+          <code class="tooltip-cmd">"numa describe esto"</code>
           <div class="tooltip-hw">O doble toque en las gafas</div>
         </div>
       </div>
@@ -355,8 +355,8 @@ export class MentraDevPaulAppServer extends ActualAppServer {
         </button>
         <div class="tooltip">
           <div class="tooltip-title">Comandos de voz</div>
-          <code class="tooltip-cmd">"devpaul inicia reunión"</code>
-          <code class="tooltip-cmd">"devpaul termina reunión"</code>
+          <code class="tooltip-cmd">"numa inicia reunión"</code>
+          <code class="tooltip-cmd">"numa termina reunión"</code>
           <div class="tooltip-hw">Transcribe y resume la reunión</div>
         </div>
       </div>
@@ -369,8 +369,8 @@ export class MentraDevPaulAppServer extends ActualAppServer {
         </button>
         <div class="tooltip">
           <div class="tooltip-title">Modo sin wake word</div>
-          <code class="tooltip-cmd">"devpaul modo continuo"</code>
-          <div class="tooltip-hw">Habla libremente sin decir "devpaul"</div>
+          <code class="tooltip-cmd">"numa modo continuo"</code>
+          <div class="tooltip-hw">Habla libremente sin decir "numa"</div>
         </div>
       </div>
 
@@ -382,8 +382,8 @@ export class MentraDevPaulAppServer extends ActualAppServer {
         </button>
         <div class="tooltip">
           <div class="tooltip-title">Comandos de voz</div>
-          <code class="tooltip-cmd">"devpaul detente"</code>
-          <code class="tooltip-cmd">"devpaul para"</code>
+          <code class="tooltip-cmd">"numa detente"</code>
+          <code class="tooltip-cmd">"numa para"</code>
           <div class="tooltip-hw">Cancela la respuesta actual</div>
         </div>
       </div>

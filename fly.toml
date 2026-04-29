@@ -1,4 +1,4 @@
-app = "mentra-devpaul-ai"
+app = "mentra-numa-ai"
 primary_region = "dfw"  # Dallas — closest to LATAM (mia deprecated)
 
 [build]

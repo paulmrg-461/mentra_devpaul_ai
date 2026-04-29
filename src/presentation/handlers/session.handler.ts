@@ -50,7 +50,7 @@ export class SessionHandler {
   ) {}
 
   setup(session: AppSession) {
-    console.log('[SESSION] Initializing DevPaul Session Handler...');
+    console.log('[SESSION] Initializing Numa Session Handler...');
     this.currentSession = session;
     this.clearAllTimers();
     this.lastCapturedPhoto = null;
@@ -132,7 +132,7 @@ export class SessionHandler {
 
       case SessionState.LISTENING:
         if (!isFinal) {
-          if (this.continuousMode && lowerText.trim().length >= NONFINAL_MIN_LENGTH) {
+          if (lowerText.trim().length >= NONFINAL_MIN_LENGTH) {
             await this.handleListeningState(session, lowerText);
           }
           return;
@@ -582,7 +582,7 @@ export class SessionHandler {
   private async transitionToListening(session: AppSession): Promise<void> {
     this.transitionTo(SessionState.LISTENING, 'wake word alone');
     this.showText(session, USER_MESSAGES.idle);
-    await this.audioManager?.speak(USER_MESSAGES.idle, false);
+    void this.audioManager?.speak(USER_MESSAGES.idle, false);
 
     this.followUpTimer = setTimeout(() => {
       if (this.state === SessionState.LISTENING) {

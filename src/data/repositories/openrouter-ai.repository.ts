@@ -28,8 +28,8 @@ export class OpenRouterAIRepository implements IAIRepository {
         headers: {
           ...options.headers,
           'Authorization': `Bearer ${this.apiKey}`,
-          'HTTP-Referer': 'https://devpaul.pro',
-          'X-Title': 'DevPaul AI',
+          'HTTP-Referer': 'https://numa.pro',
+          'X-Title': 'Numa AI',
         },
       });
     } finally {
