@@ -1,9 +1,9 @@
 export const WAKE_WORD = 'numa';
 
 // STT aliases: es-ES transcribes "numa" as "deadpool"
-export const WAKE_WORDS = ['numa', 'uma', 'muma', 'juma', 'puma', 'no mas', 'no ma'];
+export const WAKE_WORDS = ['numa', 'uma', 'muma', 'juma', 'puma', 'no mas', 'no ma', 'nomas', 'nomás'];
 
-export const STOP_COMMANDS = ['detente', 'para'];
+export const STOP_COMMANDS = ['detente', 'para ya'];
 
 // Capture only — no immediate analysis, waits for follow-up question
 export const PHOTO_CAPTURE_COMMANDS = [

@@ -582,7 +582,6 @@ export class SessionHandler {
   private async transitionToListening(session: AppSession): Promise<void> {
     this.transitionTo(SessionState.LISTENING, 'wake word alone');
     this.showText(session, USER_MESSAGES.idle);
-    void this.audioManager?.speak(USER_MESSAGES.idle, false);
 
     this.followUpTimer = setTimeout(() => {
       if (this.state === SessionState.LISTENING) {
@@ -684,11 +683,16 @@ export class SessionHandler {
   private extractCommandAfterWakeWord(text: string): string | undefined {
     const detected = this.detectWakeWord(text);
     if (!detected) return undefined;
-    return text.split(detected)[1]?.trim();
+    const after = text.split(detected)[1]?.trim();
+    // Strip leading punctuation STT sometimes adds after wake word (e.g. "numa:")
+    return after?.replace(/^[:\-,.\s¿¡]+/, '').trim();
   }
 
   private isStopCommand(text: string): boolean {
-    return STOP_COMMANDS.some(cmd => text.includes(cmd));
+    return STOP_COMMANDS.some(cmd => {
+      const re = new RegExp(`(?:^|\\s)${cmd}(?:\\s|$)`);
+      return re.test(text);
+    });
   }
 
   private isVisionCommand(text: string): boolean {

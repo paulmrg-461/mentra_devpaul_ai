@@ -54,7 +54,7 @@ export class GroqAIRepository implements IAIRepository {
           { role: 'user', content: text },
         ],
         temperature: 0.7,
-        max_tokens: 150,
+        max_tokens: 300,
       }),
     });
 
@@ -211,7 +211,7 @@ export class GroqAIRepository implements IAIRepository {
           { role: 'user', content: text },
         ],
         temperature: 0.7,
-        max_tokens: 150,
+        max_tokens: 300,
         stream: true,
       }),
     });
